@@ -1,9 +1,15 @@
 ymaps.ready(['DeliveryCalculator']).then(function init () {
     var myMap = new ymaps.Map('map', {
-            center: [60.906882, 30.067233],
-            zoom: 9,
+            center: [55.909574, 38.021266],
+            zoom: 17,
             type: 'yandex#map',
-            controls: []
+            controls: ['zoomControl'],
+        }, {
+            // В нашем примере хотспотные данные есть только для 9 и 10 масштаба.
+            // Поэтому ограничим диапазон коэффициентов масштабирования карты.
+            minZoom: 5,
+            maxZoom: 17,
+			autoFitToViewport: 'always'
         }),
         searchStartPoint = new ymaps.control.SearchControl({
             options: {
@@ -21,13 +27,26 @@ ymaps.ready(['DeliveryCalculator']).then(function init () {
                 noPopup: true,
                 noPlacemark: true,
                 placeholderContent: 'Адрес конечной точки',
-                size: 'large',
-                float: 'none',
-                position: { left: 10, top: 44 }
+                size: 'large'
             }
         }),
-        calculator = new ymaps.DeliveryCalculator(myMap);
-
+        calculator = new ymaps.DeliveryCalculator(myMap),
+		myPlacemark = new ymaps.Placemark(myMap.getCenter(), {
+            hintContent: 'Scale Group',
+            balloonContent: 'Scale Group <br> Московская обасть, г.Щелково, ул.Заводская д.8 <br>+7 (495) 744-74-65 +7 (925) 744-74-65'
+        }, {
+            // Опции.
+            // Необходимо указать данный тип макета.
+            iconLayout: 'default#image',
+            // Своё изображение иконки метки.
+            iconImageHref: 'images/faviconSG.png',
+            // Размеры метки.
+            iconImageSize: [32, 32],
+            // Смещение левого верхнего угла иконки относительно
+            // её "ножки" (точки привязки).
+            iconImageOffset: [-3, -32]
+        });
+	myMap.geoObjects.add(myPlacemark);	
     myMap.controls.add(searchStartPoint);
     myMap.controls.add(searchFinishPoint);
 

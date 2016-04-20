@@ -81,12 +81,26 @@ ymaps.modules.define(
              * @param  {Number} routeLength Длина маршрута в километрах.
              * @return {Number} Стоимость доставки.
              */
-            calculate: function (routeLength) {
+            calculate: function (routeLength,weight) {
                 // Константы.
+				switch (weight) {
+case 5:
+                var DELIVERY_TARIF = 25, // Стоимость за километр.
+                    MINIMUM_COST = 6000; // Минимальная стоимость.
+					break
+case 10:
+                var DELIVERY_TARIF = 35, // Стоимость за километр.
+                    MINIMUM_COST = 8000; // Минимальная стоимость.
+					break
+case 20:
+                var DELIVERY_TARIF = 45, // Стоимость за километр.
+                    MINIMUM_COST = 10000; // Минимальная стоимость.
+					break
+default:
                 var DELIVERY_TARIF = 20, // Стоимость за километр.
-                    MINIMUM_COST = 500; // Минимальная стоимость.
-
-                return Math.max(routeLength * DELIVERY_TARIF, MINIMUM_COST);
+                    MINIMUM_COST = 3000; // Минимальная стоимость.
+				}
+                return Math.max((routeLength * DELIVERY_TARIF)+ MINIMUM_COST, MINIMUM_COST);
             },
 
             /**
@@ -109,20 +123,19 @@ ymaps.modules.define(
                     ymaps.route([start, finish])
                         .then(function (router) {
                             var distance = Math.round(router.getLength() / 1000),
-                                message = '<span>Расстояние: ' + distance + 'км.</span><br/>' +
-                                    '<span style="font-weight: bold; font-style: italic">Стоимость доставки: %sр.</span>';
+                                message = '<span>Расстояние: ' + distance + 'км.</span>' +
+                                    '<span style="font-weight: bold; font-style: italic"><br/>Стоимость: <br/>до 3 тонн: 3tр. <br/>до 5 тонн: 5tр. <br/>до 10 тонн: 10tр. <br/>до 20 тонн: 20tр.</span>';
 
                             this._route = router.getPaths(); // Получаем коллекцию путей, из которых состоит маршрут.
 
-                            this._route.options.set({ strokeWidth: 5, strokeColor: '0000ffff', opacity: 0.5 });
+                            this._route.options.set({ strokeWidth: 5, strokeColor: '0000ffff', opacity: 0.6 });
                             this._map.geoObjects.add(this._route); // Добавляем маршрут на карту.
                             // Задаем контент балуна для начального и конечного маркера.
-                            this._startPoint.properties.set('balloonContentBody', startBalloon + message.replace('%s', this.calculate(distance)));
-                            this._finishPoint.properties.set('balloonContentBody', finishBalloon + message.replace('%s', this.calculate(distance)));
-
+                            this._finishPoint.properties.set('balloonContentBody', finishBalloon + strr(message,['3t', '5t', '10t', '20t'], [this.calculate(distance), this.calculate(distance,5), this.calculate(distance,10), this.calculate(distance,20)]));
                             // Открываем балун над точкой доставки.
                             // Закомментируйте, если не хотите показывать балун автоматически.
-                            this._finishPoint.balloon.open();
+                            //this._finishPoint.balloon.open();
+							document.getElementById("calcinfo").innerHTML = this._finishPoint.properties.get('balloonContentBody');
                         }, this);
 
                     this._map.setBounds(this._map.geoObjects.getBounds());
@@ -156,3 +169,31 @@ ymaps.modules.define(
         provide(DeliveryCalculator);
     }
 );
+
+function strr(txt, search, replace, insbefore, insafter) {
+  if (!(search && replace)) return txt;
+  var i, txt1, sitem, ritem;
+  if (!insbefore) insbefore = '';
+  if (!insafter) insafter = '';
+  // приводим параметры поиска и замены к массивам
+  if ((typeof search) != 'object') search = [search];
+  if ((typeof replace) != 'object') replace = [replace];
+  // длина массива замены должна быть не меньше длины массива поиска
+  if (replace.length < search.length) {
+    ritem = replace[replace.length - 1];
+    for (i = replace.length; i < search.length; i++) {
+      replace.push(ritem);
+    }
+  }
+  // ищем и заменяем
+  for (i = 0; i < search.length; i++) {
+    sitem = search[i];
+    ritem = insbefore + replace[i] + insafter;
+    txt1 = '';
+    while (txt1 != txt) {
+      txt1 = txt;
+      txt = txt1.replace(sitem, ritem);
+    }
+  }
+  return txt;
+}
